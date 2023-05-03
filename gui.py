@@ -10,31 +10,45 @@ def create_folder_selection(window):
     folder_var = tk.StringVar()
 
     folder_label = tk.Label(window, text="텍스트 파일이 있는 폴더:")
-    folder_label.grid(row=0, column=0, padx=10, pady=10)
+    folder_label.grid(row=0, column=1, padx=10, pady=10, sticky='e')
 
-    folder_entry = tk.Entry(window, textvariable=folder_var)
-    folder_entry.grid(row=0, column=1, padx=10, pady=10)
-
-    folder_button = tk.Button(window, text="폴더 선택", command=lambda: folder_var.set(filedialog.askdirectory()))
-    folder_button.grid(row=0, column=2, padx=10, pady=10)
+    folder_entry = tk.Entry(window, textvariable=folder_var, width=40)
+    folder_entry.grid(row=0, column=2, padx=10, pady=10, sticky='w')
 
     return folder_var
 
 def update_keywords(window):
-    keywords = ["수업목표", "수업내용", "교재 및 재료", "선생님 소개", "활동내용", "권장사항", "성과평가", "학습결과", "질문과 답변", "보조자료", "피드백"]
+    keywords = ["주제", "활동", "특징"]
     keyword_vars = []
 
     for i, keyword in enumerate(keywords):
         keyword_label = tk.Label(window, text=keyword)
-        keyword_label.grid(row=i+1, column=0, padx=10, pady=10)
+        keyword_label.grid(row=i+1, column=1, padx=10, pady=10, sticky='e')
 
         keyword_var = tk.StringVar()
-        keyword_entry = tk.Entry(window, textvariable=keyword_var)
-        keyword_entry.grid(row=i+1, column=1, padx=10, pady=10)
+        keyword_entry = tk.Entry(window, textvariable=keyword_var, width=40)
+        keyword_entry.grid(row=i+1, column=2, padx=10, pady=10, sticky='w')
         keyword_vars.append(keyword_var)
 
     return tuple(keyword_vars)
 
-def create_generate_button(window, callback):
-    generate_button = tk.Button(window, text="생성하기", command=callback)
-    generate_button.grid(row=len(window.grid_slaves())+1, column=0, padx=10, pady=10, columnspan=3)
+def create_activity_details(window):
+    activity_details_label = tk.Label(window, text="활동 내용:")
+    activity_details_label.grid(row=4, column=1, padx=10, pady=10, sticky='e')
+
+    activity_details_frame = tk.Frame(window)
+    activity_details_frame.grid(row=4, column=2, padx=10, pady=10, sticky='w')
+
+    return activity_details_frame
+
+def add_activity_detail(activity_details_frame):
+    detail_var = tk.StringVar()
+    detail_entry = tk.Entry(activity_details_frame, textvariable=detail_var, width=40)
+    detail_entry.pack(padx=5, pady=5, side=tk.TOP)
+    return detail_var
+
+def create_result_textbox(window):
+    result_textbox = tk.Text(window, wrap=tk.WORD, width=50, height=10)
+    result_textbox.grid(row=6, column=1, padx=10, pady=20, columnspan=2, rowspan=3)
+
+    return result_textbox

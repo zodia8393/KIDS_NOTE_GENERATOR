@@ -1,21 +1,42 @@
+# generator.py
 import os
+import random
 import torch
 from transformers import T5ForConditionalGeneration, T5Tokenizer, TextDataset, DataCollatorForLanguageModeling
 from transformers import Trainer, TrainingArguments
+from datasets import Dataset
+
+def split_files(folder_path, train_ratio=0.8):
+    all_files = [file for file in os.listdir(folder_path) if file.endswith('.txt')]
+    random.shuffle(all_files)
+
+    num_train_files = int(len(all_files) * train_ratio)
+
+    train_files = all_files[:num_train_files]
+    val_files = all_files[num_train_files:]
+
+    return train_files, val_files
+
+def load_dataset(folder_path, file_list, tokenizer):
+    texts = []
+    for file in file_list:
+        with open(os.path.join(folder_path, file), 'r', encoding='utf-8', errors='ignore') as f:
+            text = f.read()
+            texts.append(text)
+
+    dataset = Dataset.from_dict({"text": texts})
+    tokenized_dataset = dataset.map(lambda example: tokenizer(example["text"], truncation=True, max_length=128), batched=True)
+
+    return tokenized_dataset
 
 def fine_tune_model(training_folder_path):
-    model = T5ForConditionalGeneration.from_pretrained("google/t5-small")
-    tokenizer = T5Tokenizer.from_pretrained("google/t5-small")
+    model = T5ForConditionalGeneration.from_pretrained("t5-small")
+    tokenizer = T5Tokenizer.from_pretrained("t5-small")
 
-    def load_dataset(path):
-        return TextDataset(
-            tokenizer=tokenizer,
-            file_path=path,
-            block_size=128
-        )
+    train_files, val_files = split_files(training_folder_path)
 
-    train_dataset = load_dataset(os.path.join(training_folder_path, "train.txt"))
-    val_dataset = load_dataset(os.path.join(training_folder_path, "val.txt"))
+    train_dataset = load_dataset(training_folder_path, train_files, tokenizer)
+    val_dataset = load_dataset(training_folder_path, val_files, tokenizer)
 
     data_collator = DataCollatorForLanguageModeling(
         tokenizer=tokenizer, mlm=False,
@@ -45,8 +66,13 @@ def fine_tune_model(training_folder_path):
 
     return model
 
+def save_and_load_model(folder_path):
+    model.save_pretrained(folder_path)
+    loaded_model = T5ForConditionalGeneration.from_pretrained(folder_path)
+    return loaded_model
+
 def generate_note(model, keywords, max_length=256):
-    tokenizer = T5Tokenizer.from_pretrained("google/t5-small")
+    tokenizer = T5Tokenizer.from_pretrained("t5-small")
 
     prompt = "어린이 노트 생성:"
     for keyword, value in keywords.items():
@@ -56,4 +82,3 @@ def generate_note(model, keywords, max_length=256):
     output_ids = model.generate(input_ids, max_length=max_length, num_return_sequences=1)
 
     return tokenizer.decode(output_ids[0], skip_special_tokens=True)
-
